@@ -24,6 +24,14 @@ CREATE TABLE IF NOT EXISTS jobs (
   created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
 );
 
+CREATE TABLE IF NOT EXISTS patterns (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  keyword TEXT NOT NULL,
+  summary TEXT NOT NULL,
+  guide TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+);
+
 CREATE TABLE IF NOT EXISTS posts (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   job_id INTEGER NOT NULL REFERENCES jobs(id),
@@ -40,6 +48,13 @@ CREATE TABLE IF NOT EXISTS posts (
 );
 `);
 
+// 기존 DB에 새 컬럼 추가 (이미 있으면 무시)
+try {
+  db.exec(`ALTER TABLE jobs ADD COLUMN pattern_id INTEGER REFERENCES patterns(id)`);
+} catch {
+  /* column already exists */
+}
+
 export interface Job {
   id: number;
   channel: string;
@@ -52,6 +67,15 @@ export interface Job {
   max_chars: number;
   memo: string | null;
   status: string;
+  pattern_id: number | null;
+  created_at: string;
+}
+
+export interface Pattern {
+  id: number;
+  keyword: string;
+  summary: string;
+  guide: string;
   created_at: string;
 }
 

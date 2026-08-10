@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import db, { type Job } from "@/lib/db";
+import db, { type Job, type Pattern } from "@/lib/db";
 import { generateBatch } from "@/lib/claude";
 
 export const maxDuration = 300;
@@ -12,8 +12,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const body = await req.json().catch(() => ({}));
   const count = Math.min(Number(body.count) || job.daily_count, 20);
 
+  const pattern = job.pattern_id
+    ? (db.prepare(`SELECT * FROM patterns WHERE id = ?`).get(job.pattern_id) as Pattern | undefined)
+    : undefined;
+
   try {
-    const posts = await generateBatch(job, count);
+    const posts = await generateBatch(job, count, pattern?.guide);
     const insert = db.prepare(
       `INSERT INTO posts (job_id, channel, format, title, body, tags, image_suggestion)
        VALUES (?, ?, ?, ?, ?, ?, ?)`

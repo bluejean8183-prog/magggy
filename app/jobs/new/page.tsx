@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { TOPICS, FORMATS, DAILY_COUNTS } from "@/lib/constants";
+import type { Pattern } from "@/lib/db";
 
 export default function NewJobPage() {
   const router = useRouter();
@@ -14,8 +16,17 @@ export default function NewJobPage() {
   const [formats, setFormats] = useState<string[]>([]);
   const [dailyCount, setDailyCount] = useState(5);
   const [memo, setMemo] = useState("");
+  const [patterns, setPatterns] = useState<Pattern[]>([]);
+  const [patternId, setPatternId] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    fetch("/api/patterns")
+      .then((r) => r.json())
+      .then((data) => Array.isArray(data) && setPatterns(data))
+      .catch(() => {});
+  }, []);
 
   const finalTopic = topic === "__custom__" ? customTopic.trim() : topic;
 
@@ -43,6 +54,7 @@ export default function NewJobPage() {
           min_chars: 300,
           max_chars: 800,
           memo: memo.trim(),
+          pattern_id: patternId,
         }),
       });
       const data = await res.json();
@@ -127,6 +139,27 @@ export default function NewJobPage() {
               </button>
             ))}
           </div>
+        </div>
+
+        <div className="field">
+          <label>스타일 가이드 연결 (선택) — 상위 노출 패턴을 원고에 적용</label>
+          {patterns.length === 0 ? (
+            <div className="hint">
+              저장된 패턴이 없습니다. <Link href="/patterns" style={{ color: "var(--accent)" }}>패턴 분석</Link>에서
+              상위 노출 글을 분석하면 여기서 연결할 수 있어요.
+            </div>
+          ) : (
+            <div className="chips">
+              <button type="button" className={`chip ${patternId === null ? "selected" : ""}`} onClick={() => setPatternId(null)}>
+                사용 안 함
+              </button>
+              {patterns.map((p) => (
+                <button key={p.id} type="button" className={`chip ${patternId === p.id ? "selected" : ""}`} onClick={() => setPatternId(p.id)}>
+                  🔑 {p.keyword}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="field">

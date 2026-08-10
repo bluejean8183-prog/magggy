@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import db, { type Job, type Post } from "@/lib/db";
+import db, { type Job, type Pattern, type Post } from "@/lib/db";
 import { CHANNELS, FORMATS } from "@/lib/constants";
 import JobDetailClient from "./client";
 
@@ -18,6 +18,10 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
     .map((k) => FORMATS.find((f) => f.key === k)?.label ?? k)
     .join(" · ");
 
+  const pattern = job.pattern_id
+    ? (db.prepare(`SELECT * FROM patterns WHERE id = ?`).get(job.pattern_id) as Pattern | undefined)
+    : undefined;
+
   return (
     <>
       <h1 className="page-title">
@@ -25,6 +29,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
         {job.target_name}
         <span style={{ fontSize: 13, fontWeight: 400, color: "var(--text-soft)", marginLeft: 12 }}>
           {CHANNELS[job.channel as keyof typeof CHANNELS]} · {job.topic} · {formatLabels} · 일 {job.daily_count}개
+          {pattern && <> · 🔑 패턴: {pattern.keyword}</>}
         </span>
       </h1>
       <JobDetailClient job={JSON.parse(JSON.stringify(job))} posts={JSON.parse(JSON.stringify(posts))} />
