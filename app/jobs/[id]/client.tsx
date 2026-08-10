@@ -104,7 +104,17 @@ function PostCard({ post, onChanged }: { post: Post; onChanged: () => void }) {
         {post.body}
       </div>
       {tags.length > 0 && <div className="pc-tags">{tags.map((t) => `#${t}`).join(" ")}</div>}
-      {post.image_suggestion && <div className="pc-image">📷 이미지 제안: {post.image_suggestion}</div>}
+      {post.image_suggestion && <div className="pc-image">📷 사진 가이드: {post.image_suggestion}</div>}
+      {post.image_prompt && (
+        <div className="pc-image" style={{ display: "block", marginTop: 8, background: "#eef0ff", color: "#3d49d8" }}>
+          🎨 AI 이미지 프롬프트 (이미지 생성 AI에 붙여넣기):
+          <div style={{ whiteSpace: "pre-wrap", marginTop: 4, fontFamily: "monospace", fontSize: 12 }}>{post.image_prompt}</div>
+          <button className="btn sm" style={{ marginTop: 6 }} onClick={async () => {
+            await navigator.clipboard.writeText(post.image_prompt!);
+            alert("프롬프트가 복사되었습니다. Gemini, ChatGPT 등 이미지 생성 AI에 붙여넣으세요.");
+          }}>프롬프트 복사</button>
+        </div>
+      )}
       <div className="pc-actions">
         <button className="btn sm primary" onClick={copy}>{copied ? "✓ 복사됨" : "📋 복사"}</button>
         <button className="btn sm" onClick={() => setEditing(true)} disabled={!!busy}>✏️ 수정</button>

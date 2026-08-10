@@ -117,7 +117,7 @@ const POST_SCHEMA = {
   type: "object",
   properties: {
     title: { type: "string", description: "게시글 제목. 낚시성 없이 자연스럽게" },
-    body: { type: "string", description: "게시글 본문. 문단 구분은 빈 줄로" },
+    body: { type: "string", description: "게시글 본문. 문단 구분은 빈 줄로. 이미지가 들어갈 자리는 [사진1], [사진2] 형식으로 표시" },
     tags: {
       type: "array",
       items: { type: "string" },
@@ -125,23 +125,28 @@ const POST_SCHEMA = {
     },
     image_suggestion: {
       type: ["string", "null"],
-      description: "이미지를 넣는다면 어떤 사진이 어울리는지 한 줄 제안. 이미지가 불필요하면 null",
+      description: "각 [사진N] 자리에 어떤 사진이 들어가야 하는지 촬영/수급 가이드. 이미지가 불필요하면 null",
+    },
+    image_prompt: {
+      type: ["string", "null"],
+      description: "AI 이미지 생성용 영문 프롬프트 ([사진N]별로 줄바꿈 구분). AI 이미지를 쓰지 않으면 null",
     },
   },
-  required: ["title", "body", "tags", "image_suggestion"],
+  required: ["title", "body", "tags", "image_suggestion", "image_prompt"],
   additionalProperties: false,
 } as const;
 
 const POST_JSON_INSTRUCTION = `
 
 응답은 반드시 아래 형식의 JSON 객체 하나만 출력하세요. JSON 앞뒤에 다른 텍스트나 코드블록 표시를 붙이지 마세요.
-{"title": "제목", "body": "본문 (문단 구분은 빈 줄)", "tags": ["태그1", "태그2", "태그3"], "image_suggestion": "이미지 제안 또는 null"}`;
+{"title": "제목", "body": "본문 (문단 구분은 빈 줄, 이미지 자리는 [사진1] 형식)", "tags": ["태그1", "태그2", "태그3"], "image_suggestion": "사진 가이드 또는 null", "image_prompt": "AI 이미지 영문 프롬프트 또는 null"}`;
 
 interface GeneratedPost {
   title: string;
   body: string;
   tags: string[];
   image_suggestion: string | null;
+  image_prompt: string | null;
   format: string;
 }
 
@@ -152,6 +157,7 @@ function validatePost(raw: unknown): RawPost {
   if (!parsed?.title || !parsed?.body) throw new Error("응답 JSON에 제목/본문이 없습니다.");
   if (!Array.isArray(parsed.tags)) parsed.tags = [];
   if (typeof parsed.image_suggestion !== "string") parsed.image_suggestion = null;
+  if (typeof parsed.image_prompt !== "string") parsed.image_prompt = null;
   return parsed;
 }
 
@@ -181,7 +187,8 @@ function buildPrompt(job: Job, formatKey: FormatKey, seq: number, patternGuide?:
 - 제목에 검색될 만한 키워드를 자연스럽게 포함
 - 본문은 소제목/문단 구분이 있는 장문 구조, 경험과 정보가 섞인 진짜 사람의 글
 - 광고 티, 과장, 상투적인 AI 말투("~하는 것이 중요합니다" 반복 등) 금지
-- 이모지는 아예 안 쓰거나 한두 개만`
+- 이모지는 아예 안 쓰거나 한두 개만
+- 건강·의료 관련 내용은 일반 상식 수준으로만 다루고, 확정적인 효능·치료 주장 금지. 필요하면 전문가 상담을 권하는 문장으로 마무리`
     : `당신은 네이버 카페의 평범한 회원입니다. 카페 게시판에 자연스러운 글을 씁니다.
 - 실제 회원이 쓴 것 같은 구어체, 완벽하지 않은 문장도 괜찮음
 - 광고 티, 과장, 홍보 문구 절대 금지
@@ -195,13 +202,26 @@ function buildPrompt(job: Job, formatKey: FormatKey, seq: number, patternGuide?:
 ${patternGuide}`
     : "";
 
+  // 이미지 지침: 블로그는 이미지가 필수적, 카페는 20% 확률만
+  const imageMode = job.image_mode || "real";
+  const imageBase = isBlog
+    ? `본문에 이미지 자리를 [사진1], [사진2] 형식으로 2~4곳 표시하세요.`
+    : `80% 확률로 이미지 없이 쓰고(image_suggestion과 image_prompt 모두 null), 20% 확률로만 본문에 [사진1] 자리 하나를 넣으세요.`;
+  const imageModeInstruction =
+    imageMode === "ai"
+      ? `이미지는 AI로 생성합니다. image_prompt에 각 [사진N]별 영문 이미지 생성 프롬프트를 작성하세요 (사실적인 스마트폰 사진 스타일, 한국의 일상적인 환경, 과하게 완벽하지 않은 자연스러운 구도). image_suggestion에는 각 사진이 본문 어디에 왜 들어가는지 한글로 설명하세요.`
+      : imageMode === "mix"
+        ? `이미지마다 실제 사진이 나은지 AI 생성이 나은지 판단하세요. 직접 찍기 쉬운 장면(음식, 제품, 장소)은 image_suggestion에 촬영 가이드로, 연출이 어렵거나 개념적인 장면(비교표, 분위기 컷, 인포그래픽)은 image_prompt에 영문 AI 프롬프트로 제공하세요.`
+        : `이미지는 실제 사진을 사용합니다. image_suggestion에 각 [사진N]별로 어떤 사진을 찍거나 구해야 하는지 구체적인 가이드를 작성하세요 (구도, 담을 대상, 분위기). image_prompt는 null로 하세요.`;
+
   const user = `주제: ${job.topic}
 글 형태: ${format.label} — ${format.hint}
 분량: 약 ${targetChars}자 (±20% 허용)
 관점: ${angle}
 ${job.memo ? `참고 메모: ${job.memo}` : ""}${patternSection}
 이번 글은 시리즈 중 ${seq}번째 글입니다. 이전 글들과 소재가 겹치지 않도록 이 주제 안에서 구체적인 소재 하나를 스스로 골라 쓰세요.
-80% 확률로 image_suggestion을 null로 하고, 20% 확률로만 이미지 제안을 넣으세요.`;
+${imageBase}
+${imageModeInstruction}`;
 
   return { system, user };
 }

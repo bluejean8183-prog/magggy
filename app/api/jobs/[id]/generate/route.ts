@@ -19,12 +19,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   try {
     const posts = await generateBatch(job, count, pattern?.guide);
     const insert = db.prepare(
-      `INSERT INTO posts (job_id, channel, format, title, body, tags, image_suggestion)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO posts (job_id, channel, format, title, body, tags, image_suggestion, image_prompt)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
     );
     const insertAll = db.transaction(() => {
       for (const p of posts) {
-        insert.run(job.id, job.channel, p.format, p.title, p.body, JSON.stringify(p.tags), p.image_suggestion);
+        insert.run(job.id, job.channel, p.format, p.title, p.body, JSON.stringify(p.tags), p.image_suggestion, p.image_prompt);
       }
     });
     insertAll();

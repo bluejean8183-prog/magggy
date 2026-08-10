@@ -19,10 +19,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const derived = await derivePost(post, channel);
     const result = db
       .prepare(
-        `INSERT INTO posts (job_id, parent_id, channel, format, title, body, tags, image_suggestion)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+        `INSERT INTO posts (job_id, parent_id, channel, format, title, body, tags, image_suggestion, image_prompt)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
       )
-      .run(post.job_id, post.id, channel, null, derived.title, derived.body, JSON.stringify(derived.tags), derived.image_suggestion);
+      .run(post.job_id, post.id, channel, null, derived.title, derived.body, JSON.stringify(derived.tags), derived.image_suggestion, derived.image_prompt);
     return NextResponse.json({ id: result.lastInsertRowid });
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : "변환 실패" }, { status: 500 });

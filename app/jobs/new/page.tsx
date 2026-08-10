@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { TOPICS, FORMATS, DAILY_COUNTS } from "@/lib/constants";
+import { TOPICS, FORMATS, DAILY_COUNTS, IMAGE_MODES } from "@/lib/constants";
 import type { Pattern } from "@/lib/db";
 
 export default function NewJobPage() {
@@ -16,6 +16,7 @@ export default function NewJobPage() {
   const [formats, setFormats] = useState<string[]>([]);
   const [dailyCount, setDailyCount] = useState(5);
   const [memo, setMemo] = useState("");
+  const [imageMode, setImageMode] = useState<string>("real");
   const [patterns, setPatterns] = useState<Pattern[]>([]);
   const [patternId, setPatternId] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -55,6 +56,7 @@ export default function NewJobPage() {
           max_chars: 800,
           memo: memo.trim(),
           pattern_id: patternId,
+          image_mode: imageMode,
         }),
       });
       const data = await res.json();
@@ -136,6 +138,18 @@ export default function NewJobPage() {
               <button key={c} type="button" className={`radio-card ${dailyCount === c ? "selected" : ""}`} onClick={() => setDailyCount(c)}>
                 {c}개
                 <span className="sub">월 {c * 30}개</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="field">
+          <label>이미지 방식 — 원고에 들어갈 이미지를 어떻게 준비할지</label>
+          <div className="radio-row" style={{ maxWidth: 640 }}>
+            {IMAGE_MODES.map((m) => (
+              <button key={m.key} type="button" className={`radio-card ${imageMode === m.key ? "selected" : ""}`} onClick={() => setImageMode(m.key)}>
+                {m.label}
+                <span className="sub">{m.hint}</span>
               </button>
             ))}
           </div>

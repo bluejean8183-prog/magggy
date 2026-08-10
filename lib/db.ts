@@ -54,6 +54,16 @@ try {
 } catch {
   /* column already exists */
 }
+try {
+  db.exec(`ALTER TABLE jobs ADD COLUMN image_mode TEXT NOT NULL DEFAULT 'real'`);
+} catch {
+  /* column already exists */
+}
+try {
+  db.exec(`ALTER TABLE posts ADD COLUMN image_prompt TEXT`);
+} catch {
+  /* column already exists */
+}
 
 export interface Job {
   id: number;
@@ -68,6 +78,7 @@ export interface Job {
   memo: string | null;
   status: string;
   pattern_id: number | null;
+  image_mode: string;
   created_at: string;
 }
 
@@ -89,6 +100,7 @@ export interface Post {
   body: string;
   tags: string;
   image_suggestion: string | null;
+  image_prompt: string | null;
   status: string;
   created_at: string;
   published_at: string | null;
