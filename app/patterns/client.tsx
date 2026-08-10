@@ -4,15 +4,44 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Pattern } from "@/lib/db";
 
-function PatternCard({ pattern, onDeleted }: { pattern: Pattern; onDeleted: () => void }) {
+function patternAgeDays(createdAt: string): number {
+  return Math.floor((Date.now() - new Date(createdAt.replace(" ", "T")).getTime()) / 86400000);
+}
+
+function PatternCard({ pattern, onChanged }: { pattern: Pattern; onChanged: () => void }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [reanalyzing, setReanalyzing] = useState(false);
+  const [newSamples, setNewSamples] = useState("");
+  const [msg, setMsg] = useState("");
+  const age = patternAgeDays(pattern.created_at);
 
   const remove = async () => {
     if (!confirm(`"${pattern.keyword}" 패턴을 삭제할까요? 연결된 작업은 패턴 없이 생성됩니다.`)) return;
     setBusy(true);
     await fetch(`/api/patterns/${pattern.id}`, { method: "DELETE" });
-    onDeleted();
+    onChanged();
+    setBusy(false);
+  };
+
+  const reanalyze = async () => {
+    if (newSamples.trim().length < 200) return setMsg("❌ 최신 상위 글을 2개 이상 붙여넣어 주세요.");
+    setBusy(true);
+    setMsg("⏳ 재분석 중... (1분 정도 걸릴 수 있어요)");
+    const res = await fetch(`/api/patterns/${pattern.id}/reanalyze`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ samples: newSamples.trim() }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      setMsg(`❌ ${data.error || "재분석 실패"}`);
+    } else {
+      setMsg("✅ 가이드가 최신 상위 글 기준으로 갱신되었습니다.");
+      setReanalyzing(false);
+      setNewSamples("");
+      onChanged();
+    }
     setBusy(false);
   };
 
@@ -22,7 +51,10 @@ function PatternCard({ pattern, onDeleted }: { pattern: Pattern; onDeleted: () =
         <div className="pc-title">🔑 {pattern.keyword}</div>
         <div className="pc-meta">
           <span>#{pattern.id}</span>
-          <span>{pattern.created_at.slice(0, 10)}</span>
+          <span>{pattern.created_at.slice(0, 10)} 분석</span>
+          {age >= 30 && (
+            <span className="badge discarded">⏰ {age}일 경과 — 재분석 권장</span>
+          )}
         </div>
       </div>
       <div style={{ fontSize: 14, color: "#374151", marginBottom: 8 }}>{pattern.summary}</div>
@@ -31,8 +63,21 @@ function PatternCard({ pattern, onDeleted }: { pattern: Pattern; onDeleted: () =
           {pattern.guide}
         </div>
       )}
+      {reanalyzing && (
+        <div style={{ marginTop: 10 }}>
+          <div className="field" style={{ marginBottom: 8 }}>
+            <label>&quot;{pattern.keyword}&quot;로 지금 검색했을 때의 최신 상위 노출 글 붙여넣기 (2~5개, --- 구분)</label>
+            <textarea value={newSamples} onChange={(e) => setNewSamples(e.target.value)} style={{ minHeight: 160 }} />
+          </div>
+          <button className="btn sm primary" onClick={reanalyze} disabled={busy}>재분석 실행</button>
+        </div>
+      )}
+      {msg && <div style={{ marginTop: 8, fontSize: 13 }}>{msg}</div>}
       <div className="pc-actions">
         <button className="btn sm" onClick={() => setOpen(!open)}>{open ? "가이드 접기" : "📖 가이드 보기"}</button>
+        <button className="btn sm" onClick={() => setReanalyzing(!reanalyzing)} disabled={busy}>
+          {reanalyzing ? "재분석 취소" : "🔄 재분석"}
+        </button>
         <button className="btn sm" onClick={remove} disabled={busy} style={{ marginLeft: "auto", color: "#bf360c" }}>삭제</button>
       </div>
     </div>
@@ -101,7 +146,7 @@ export default function PatternsClient({ initialPatterns }: { initialPatterns: P
       {initialPatterns.length === 0 ? (
         <div className="card"><div className="empty">아직 분석한 패턴이 없습니다.</div></div>
       ) : (
-        initialPatterns.map((p) => <PatternCard key={p.id} pattern={p} onDeleted={() => router.refresh()} />)
+        initialPatterns.map((p) => <PatternCard key={p.id} pattern={p} onChanged={() => router.refresh()} />)
       )}
     </>
   );

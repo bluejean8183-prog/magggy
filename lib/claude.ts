@@ -176,7 +176,7 @@ const ANGLES = [
   "꼼꼼하게 비교하고 결정하는 사람의 시선으로",
 ];
 
-function buildPrompt(job: Job, formatKey: FormatKey, seq: number, patternGuide?: string): { system: string; user: string } {
+function buildPrompt(job: Job, formatKey: FormatKey, seq: number, patternGuide?: string, commonGuide?: string): { system: string; user: string } {
   const format = FORMATS.find((f) => f.key === formatKey)!;
   const isBlog = job.channel === "blog";
   const targetChars = isBlog ? randomInt(1500, 2500) : randomInt(job.min_chars, job.max_chars);
@@ -195,10 +195,17 @@ function buildPrompt(job: Job, formatKey: FormatKey, seq: number, patternGuide?:
 - 제목은 짧고 캐주얼하게 (카페 글 제목답게)
 - 이모티콘/이모지는 아예 안 쓰거나 한두 개만`;
 
+  // 우선순위: 키워드 패턴(최신 실전 데이터) > 공통 가이드(채널 운영 원칙) > 기본 지시
+  const commonSection = commonGuide
+    ? `
+
+[공통 작성 가이드 — 기본 지시보다 우선합니다]
+${commonGuide}`
+    : "";
   const patternSection = patternGuide
     ? `
 
-[상위 노출 글 분석 기반 스타일 가이드 — 아래 지침을 최우선으로 따르세요. 분량 지시와 충돌하면 가이드를 우선합니다]
+[상위 노출 글 분석 기반 스타일 가이드 — 최우선입니다. 공통 가이드나 분량 지시와 충돌하면 이쪽을 따르세요]
 ${patternGuide}`
     : "";
 
@@ -218,7 +225,7 @@ ${patternGuide}`
 글 형태: ${format.label} — ${format.hint}
 분량: 약 ${targetChars}자 (±20% 허용)
 관점: ${angle}
-${job.memo ? `참고 메모: ${job.memo}` : ""}${patternSection}
+${job.memo ? `참고 메모: ${job.memo}` : ""}${commonSection}${patternSection}
 이번 글은 시리즈 중 ${seq}번째 글입니다. 이전 글들과 소재가 겹치지 않도록 이 주제 안에서 구체적인 소재 하나를 스스로 골라 쓰세요.
 ${imageBase}
 ${imageModeInstruction}`;
@@ -226,8 +233,8 @@ ${imageModeInstruction}`;
   return { system, user };
 }
 
-export async function generatePost(job: Job, formatKey: FormatKey, seq: number, patternGuide?: string): Promise<GeneratedPost> {
-  const { system, user } = buildPrompt(job, formatKey, seq, patternGuide);
+export async function generatePost(job: Job, formatKey: FormatKey, seq: number, patternGuide?: string, commonGuide?: string): Promise<GeneratedPost> {
+  const { system, user } = buildPrompt(job, formatKey, seq, patternGuide, commonGuide);
   const isBlog = job.channel === "blog";
   const raw = await callStructured({
     system,
@@ -240,12 +247,12 @@ export async function generatePost(job: Job, formatKey: FormatKey, seq: number, 
   return { ...validatePost(raw), format: formatKey };
 }
 
-export async function generateBatch(job: Job, count: number, patternGuide?: string): Promise<GeneratedPost[]> {
+export async function generateBatch(job: Job, count: number, patternGuide?: string, commonGuide?: string): Promise<GeneratedPost[]> {
   const formats = JSON.parse(job.formats) as FormatKey[];
   const tasks: Array<() => Promise<GeneratedPost>> = [];
   for (let i = 0; i < count; i++) {
     const formatKey = formats[randomInt(0, formats.length - 1)];
-    tasks.push(() => generatePost(job, formatKey, i + 1, patternGuide));
+    tasks.push(() => generatePost(job, formatKey, i + 1, patternGuide, commonGuide));
   }
 
   // API/Gemini 모드는 동시 5개, Agent SDK 모드(맥스 요금제)는 프로세스를 띄우므로 동시 2개

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import db, { type Job, type Pattern } from "@/lib/db";
 import { generateBatch } from "@/lib/claude";
+import { getGuide } from "@/lib/guides";
 
 export const maxDuration = 300;
 
@@ -17,7 +18,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     : undefined;
 
   try {
-    const posts = await generateBatch(job, count, pattern?.guide);
+    const posts = await generateBatch(job, count, pattern?.guide, getGuide(job.channel));
     const insert = db.prepare(
       `INSERT INTO posts (job_id, channel, format, title, body, tags, image_suggestion, image_prompt)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`

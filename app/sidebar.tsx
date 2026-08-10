@@ -9,6 +9,7 @@ export default function Sidebar({ engineLabel }: { engineLabel: string }) {
     { href: "/jobs/new", label: "＋ 작업 추가" },
     { href: "/jobs", label: "📋 작업 현황" },
     { href: "/patterns", label: "🔍 패턴 분석" },
+    { href: "/guides", label: "📐 공통 가이드" },
   ];
   return (
     <nav className="sidebar">
