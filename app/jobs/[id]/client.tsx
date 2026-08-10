@@ -9,8 +9,28 @@ function PostCard({ post, onChanged }: { post: Post; onChanged: () => void }) {
   const [expanded, setExpanded] = useState(false);
   const [busy, setBusy] = useState("");
   const [copied, setCopied] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState(post.title);
+  const [editBody, setEditBody] = useState(post.body);
   const tags = JSON.parse(post.tags) as string[];
   const formatLabel = FORMATS.find((f) => f.key === post.format)?.label;
+
+  const saveEdit = async () => {
+    setBusy("edit");
+    const res = await fetch(`/api/posts/${post.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: editTitle, body: editBody }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      alert(data.error || "저장 실패");
+    } else {
+      setEditing(false);
+      onChanged();
+    }
+    setBusy("");
+  };
 
   const copy = async () => {
     const tagLine = tags.length ? "\n\n" + tags.map((t) => `#${t}`).join(" ") : "";
@@ -47,6 +67,27 @@ function PostCard({ post, onChanged }: { post: Post; onChanged: () => void }) {
     setBusy("");
   };
 
+  if (editing) {
+    return (
+      <div className="post-card">
+        <div className="field" style={{ marginBottom: 10 }}>
+          <label>제목</label>
+          <input type="text" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
+        </div>
+        <div className="field" style={{ marginBottom: 10 }}>
+          <label>본문</label>
+          <textarea value={editBody} onChange={(e) => setEditBody(e.target.value)} style={{ minHeight: 240 }} />
+        </div>
+        <div className="pc-actions">
+          <button className="btn sm primary" onClick={saveEdit} disabled={busy === "edit"}>
+            {busy === "edit" ? "저장 중..." : "💾 저장"}
+          </button>
+          <button className="btn sm" onClick={() => { setEditing(false); setEditTitle(post.title); setEditBody(post.body); }}>취소</button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="post-card">
       <div className="pc-head">
@@ -66,6 +107,7 @@ function PostCard({ post, onChanged }: { post: Post; onChanged: () => void }) {
       {post.image_suggestion && <div className="pc-image">📷 이미지 제안: {post.image_suggestion}</div>}
       <div className="pc-actions">
         <button className="btn sm primary" onClick={copy}>{copied ? "✓ 복사됨" : "📋 복사"}</button>
+        <button className="btn sm" onClick={() => setEditing(true)} disabled={!!busy}>✏️ 수정</button>
         {post.status !== "published" && (
           <button className="btn sm" onClick={() => setStatus("published")} disabled={!!busy}>✅ 발행 완료</button>
         )}

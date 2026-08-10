@@ -1,11 +1,9 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { FORMATS, type FormatKey } from "./constants";
 import type { Job, Post } from "./db";
+import { resolveEngine } from "./engine";
 
-// 생성 엔진 자동 선택:
-// - ANTHROPIC_API_KEY가 있으면 → Claude API 직접 호출 (종량 과금)
-// - 없으면 → Claude Code 로그인 인증을 쓰는 Agent SDK (맥스/프로 요금제 사용량에 포함, 별도 과금 없음)
-const useApiKey = !!process.env.ANTHROPIC_API_KEY;
+const engine = resolveEngine();
 
 const MODEL = "claude-opus-5";
 
@@ -105,8 +103,39 @@ async function callViaAgentSdk(system: string, user: string): Promise<RawPost> {
   return extractJson(resultText);
 }
 
+async function callViaGemini(system: string, user: string): Promise<RawPost> {
+  const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": process.env.GEMINI_API_KEY ?? "",
+      },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: system }] },
+        contents: [{ role: "user", parts: [{ text: user + JSON_INSTRUCTION }] }],
+        generationConfig: { responseMimeType: "application/json" },
+      }),
+    }
+  );
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(`Gemini 오류: ${data?.error?.message ?? res.status}`);
+  }
+  const text = (data?.candidates?.[0]?.content?.parts ?? [])
+    .map((p: { text?: string }) => p.text ?? "")
+    .join("");
+  if (!text) throw new Error("Gemini 응답이 비어있습니다.");
+  return extractJson(text);
+}
+
 async function callModel(system: string, user: string, maxTokens: number, effort: "low" | "medium"): Promise<RawPost> {
-  return useApiKey ? callViaApi(system, user, maxTokens, effort) : callViaAgentSdk(system, user);
+  if (engine === "claude-api") return callViaApi(system, user, maxTokens, effort);
+  if (engine === "gemini") return callViaGemini(system, user);
+  return callViaAgentSdk(system, user);
 }
 
 function randomInt(min: number, max: number) {
@@ -168,8 +197,8 @@ export async function generateBatch(job: Job, count: number): Promise<GeneratedP
     tasks.push(() => generatePost(job, formatKey, i + 1));
   }
 
-  // API 모드는 동시 5개, Agent SDK 모드(맥스 요금제)는 프로세스를 띄우므로 동시 2개
-  const concurrency = useApiKey ? 5 : 2;
+  // API/Gemini 모드는 동시 5개, Agent SDK 모드(맥스 요금제)는 프로세스를 띄우므로 동시 2개
+  const concurrency = engine === "claude-max" ? 2 : 5;
   const results: GeneratedPost[] = [];
   const errors: string[] = [];
   for (let i = 0; i < tasks.length; i += concurrency) {

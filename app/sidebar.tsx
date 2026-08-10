@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-export default function Sidebar() {
+export default function Sidebar({ engineLabel }: { engineLabel: string }) {
   const pathname = usePathname();
   const items = [
     { href: "/jobs/new", label: "＋ 작업 추가" },
@@ -21,6 +21,10 @@ export default function Sidebar() {
           {item.label}
         </Link>
       ))}
+      <div className="engine-badge">
+        <div className="eb-label">생성 엔진</div>
+        <div className="eb-value">{engineLabel}</div>
+      </div>
     </nav>
   );
 }

@@ -58,9 +58,26 @@ export default function JobsPage() {
   const active = jobs.filter((j) => j.status === "active");
   const done = jobs.filter((j) => j.status === "done");
 
+  const stats = db
+    .prepare(
+      `SELECT
+        (SELECT COUNT(*) FROM posts WHERE channel IN ('cafe','blog') AND status != 'discarded') AS total,
+        (SELECT COUNT(*) FROM posts WHERE status = 'published') AS published,
+        (SELECT COUNT(*) FROM posts WHERE channel IN ('threads','instagram')) AS derived,
+        (SELECT COUNT(*) FROM posts WHERE status = 'published' AND published_at >= datetime('now', 'localtime', '-7 days')) AS week_published`
+    )
+    .get() as { total: number; published: number; derived: number; week_published: number };
+
   return (
     <>
       <h1 className="page-title"><span>📋</span>작업 현황</h1>
+
+      <div className="stats-row">
+        <div className="stat"><div className="sv">{stats.total}</div><div className="sl">총 원고</div></div>
+        <div className="stat"><div className="sv">{stats.published}</div><div className="sl">발행 완료</div></div>
+        <div className="stat"><div className="sv">{stats.week_published}</div><div className="sl">최근 7일 발행</div></div>
+        <div className="stat"><div className="sv">{stats.derived}</div><div className="sl">파생 (스레드/인스타)</div></div>
+      </div>
 
       <div className="card">
         <div className="toolbar">

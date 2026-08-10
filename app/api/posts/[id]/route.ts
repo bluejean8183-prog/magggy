@@ -10,5 +10,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       `UPDATE posts SET status = ?, published_at = CASE WHEN ? = 'published' THEN datetime('now', 'localtime') ELSE published_at END WHERE id = ?`
     ).run(body.status, body.status, id);
   }
+
+  if (typeof body.title === "string" && typeof body.body === "string") {
+    if (!body.title.trim() || !body.body.trim()) {
+      return NextResponse.json({ error: "제목과 본문은 비울 수 없습니다." }, { status: 400 });
+    }
+    db.prepare(`UPDATE posts SET title = ?, body = ? WHERE id = ?`).run(body.title.trim(), body.body.trim(), id);
+  }
+
   return NextResponse.json({ ok: true });
 }

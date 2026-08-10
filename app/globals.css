@@ -34,6 +34,14 @@ html, body {
 }
 .sidebar a:hover { background: var(--sidebar-active); color: #fff; }
 .sidebar a.active { background: var(--sidebar-active); color: #fff; border-left: 3px solid var(--accent); padding-left: 21px; }
+.engine-badge { margin: 24px 16px 0; padding: 10px 12px; background: var(--sidebar-active); border-radius: 8px; }
+.engine-badge .eb-label { font-size: 11px; color: #9ca3af; margin-bottom: 3px; }
+.engine-badge .eb-value { font-size: 13px; color: #a5b4fc; font-weight: 600; }
+
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+.stat { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; }
+.stat .sv { font-size: 24px; font-weight: 800; color: var(--accent); }
+.stat .sl { font-size: 12px; color: var(--text-soft); margin-top: 2px; }
 
 .main { flex: 1; padding: 32px 40px; max-width: 1100px; }
 
