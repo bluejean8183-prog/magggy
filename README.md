@@ -7,9 +7,19 @@
 
 ```bash
 npm install
-cp .env.example .env.local   # ANTHROPIC_API_KEY 입력
 npm run dev                  # http://localhost:3000
 ```
+
+## 요금 방식 (둘 중 하나, 자동 선택)
+
+| 방식 | 조건 | 과금 |
+|---|---|---|
+| **A. 맥스/프로 요금제 (추천)** | 이 컴퓨터에 Claude Code 로그인만 되어 있으면 됨 (`claude` 실행 후 로그인) | **별도 과금 없음** — 구독 사용량에 포함 |
+| B. Claude API | `.env.local`에 `ANTHROPIC_API_KEY` 설정 | 사용량만큼 종량 과금 |
+
+`ANTHROPIC_API_KEY`가 없으면 자동으로 A 방식(Claude Code 인증)을 사용합니다.
+맥스 요금제에도 시간당 사용량 한도는 있으므로, 하루 20개 이상 대량 생성 시
+`.env.local`에 `MAGGGY_MODEL=sonnet`을 설정하면 한도를 아낄 수 있습니다.
 
 ## 주요 기능
 

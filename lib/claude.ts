@@ -2,7 +2,10 @@ import Anthropic from "@anthropic-ai/sdk";
 import { FORMATS, type FormatKey } from "./constants";
 import type { Job, Post } from "./db";
 
-const client = new Anthropic();
+// 생성 엔진 자동 선택:
+// - ANTHROPIC_API_KEY가 있으면 → Claude API 직접 호출 (종량 과금)
+// - 없으면 → Claude Code 로그인 인증을 쓰는 Agent SDK (맥스/프로 요금제 사용량에 포함, 별도 과금 없음)
+const useApiKey = !!process.env.ANTHROPIC_API_KEY;
 
 const MODEL = "claude-opus-5";
 
@@ -25,12 +28,85 @@ const POST_SCHEMA = {
   additionalProperties: false,
 } as const;
 
+const JSON_INSTRUCTION = `
+
+응답은 반드시 아래 형식의 JSON 객체 하나만 출력하세요. JSON 앞뒤에 다른 텍스트나 코드블록 표시를 붙이지 마세요.
+{"title": "제목", "body": "본문 (문단 구분은 빈 줄)", "tags": ["태그1", "태그2", "태그3"], "image_suggestion": "이미지 제안 또는 null"}`;
+
 interface GeneratedPost {
   title: string;
   body: string;
   tags: string[];
   image_suggestion: string | null;
   format: string;
+}
+
+type RawPost = Omit<GeneratedPost, "format">;
+
+function extractJson(text: string): RawPost {
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+  if (start === -1 || end <= start) throw new Error("응답에서 JSON을 찾지 못했습니다.");
+  const parsed = JSON.parse(text.slice(start, end + 1)) as RawPost;
+  if (!parsed.title || !parsed.body) throw new Error("응답 JSON에 제목/본문이 없습니다.");
+  if (!Array.isArray(parsed.tags)) parsed.tags = [];
+  if (typeof parsed.image_suggestion !== "string") parsed.image_suggestion = null;
+  return parsed;
+}
+
+async function callViaApi(system: string, user: string, maxTokens: number, effort: "low" | "medium"): Promise<RawPost> {
+  const client = new Anthropic();
+  const response = await client.messages.create({
+    model: MODEL,
+    max_tokens: maxTokens,
+    output_config: {
+      effort,
+      format: { type: "json_schema", schema: POST_SCHEMA },
+    },
+    system,
+    messages: [{ role: "user", content: user }],
+  });
+
+  if (response.stop_reason === "refusal") {
+    throw new Error("생성이 거부되었습니다. 주제나 메모 내용을 조정해보세요.");
+  }
+  const text = response.content.find((b) => b.type === "text");
+  if (!text || text.type !== "text") throw new Error("응답에 텍스트가 없습니다.");
+  return JSON.parse(text.text) as RawPost;
+}
+
+async function callViaAgentSdk(system: string, user: string): Promise<RawPost> {
+  const { query } = await import("@anthropic-ai/claude-agent-sdk");
+  let resultText = "";
+  let errorText = "";
+
+  for await (const message of query({
+    prompt: user + JSON_INSTRUCTION,
+    options: {
+      systemPrompt: system,
+      allowedTools: [],
+      maxTurns: 1,
+      ...(process.env.MAGGGY_MODEL ? { model: process.env.MAGGGY_MODEL } : {}),
+    },
+  })) {
+    if (message.type === "result") {
+      if (message.subtype === "success") resultText = message.result;
+      else errorText = message.subtype;
+    }
+  }
+
+  if (!resultText) {
+    throw new Error(
+      errorText
+        ? `생성 실패 (${errorText}). 맥에서 Claude Code에 로그인되어 있는지 확인하세요 (터미널에서 claude 실행 후 로그인).`
+        : "생성 결과가 비어있습니다."
+    );
+  }
+  return extractJson(resultText);
+}
+
+async function callModel(system: string, user: string, maxTokens: number, effort: "low" | "medium"): Promise<RawPost> {
+  return useApiKey ? callViaApi(system, user, maxTokens, effort) : callViaAgentSdk(system, user);
 }
 
 function randomInt(min: number, max: number) {
@@ -48,7 +124,7 @@ const ANGLES = [
   "꼼꼼하게 비교하고 결정하는 사람의 시선으로",
 ];
 
-function buildPrompt(job: Job, formatKey: FormatKey, seq: number): { system: string; user: string; targetChars: number } {
+function buildPrompt(job: Job, formatKey: FormatKey, seq: number): { system: string; user: string } {
   const format = FORMATS.find((f) => f.key === formatKey)!;
   const isBlog = job.channel === "blog";
   const targetChars = isBlog ? randomInt(1500, 2500) : randomInt(job.min_chars, job.max_chars);
@@ -74,31 +150,13 @@ ${job.memo ? `참고 메모: ${job.memo}` : ""}
 이번 글은 시리즈 중 ${seq}번째 글입니다. 이전 글들과 소재가 겹치지 않도록 이 주제 안에서 구체적인 소재 하나를 스스로 골라 쓰세요.
 80% 확률로 image_suggestion을 null로 하고, 20% 확률로만 이미지 제안을 넣으세요.`;
 
-  return { system, user, targetChars };
+  return { system, user };
 }
 
 export async function generatePost(job: Job, formatKey: FormatKey, seq: number): Promise<GeneratedPost> {
   const { system, user } = buildPrompt(job, formatKey, seq);
   const isBlog = job.channel === "blog";
-
-  const response = await client.messages.create({
-    model: MODEL,
-    max_tokens: isBlog ? 8000 : 4000,
-    output_config: {
-      effort: isBlog ? "medium" : "low",
-      format: { type: "json_schema", schema: POST_SCHEMA },
-    },
-    system,
-    messages: [{ role: "user", content: user }],
-  });
-
-  if (response.stop_reason === "refusal") {
-    throw new Error("생성이 거부되었습니다. 주제나 메모 내용을 조정해보세요.");
-  }
-
-  const text = response.content.find((b) => b.type === "text");
-  if (!text || text.type !== "text") throw new Error("응답에 텍스트가 없습니다.");
-  const parsed = JSON.parse(text.text) as Omit<GeneratedPost, "format">;
+  const parsed = await callModel(system, user, isBlog ? 8000 : 4000, isBlog ? "medium" : "low");
   return { ...parsed, format: formatKey };
 }
 
@@ -110,11 +168,12 @@ export async function generateBatch(job: Job, count: number): Promise<GeneratedP
     tasks.push(() => generatePost(job, formatKey, i + 1));
   }
 
-  // 동시 5개 제한으로 순차 소진
+  // API 모드는 동시 5개, Agent SDK 모드(맥스 요금제)는 프로세스를 띄우므로 동시 2개
+  const concurrency = useApiKey ? 5 : 2;
   const results: GeneratedPost[] = [];
   const errors: string[] = [];
-  for (let i = 0; i < tasks.length; i += 5) {
-    const settled = await Promise.allSettled(tasks.slice(i, i + 5).map((t) => t()));
+  for (let i = 0; i < tasks.length; i += concurrency) {
+    const settled = await Promise.allSettled(tasks.slice(i, i + concurrency).map((t) => t()));
     for (const s of settled) {
       if (s.status === "fulfilled") results.push(s.value);
       else errors.push(String(s.reason?.message ?? s.reason));
@@ -147,32 +206,13 @@ const DERIVE_PROMPTS: Record<string, { system: string; instruction: string }> = 
 
 export async function derivePost(original: Post, channel: "threads" | "instagram"): Promise<GeneratedPost> {
   const prompt = DERIVE_PROMPTS[channel];
-  const response = await client.messages.create({
-    model: MODEL,
-    max_tokens: 4000,
-    output_config: {
-      effort: "low",
-      format: { type: "json_schema", schema: POST_SCHEMA },
-    },
-    system: prompt.system,
-    messages: [
-      {
-        role: "user",
-        content: `${prompt.instruction}
+  const user = `${prompt.instruction}
 
 --- 원고 ---
 제목: ${original.title}
 
-${original.body}`,
-      },
-    ],
-  });
+${original.body}`;
 
-  if (response.stop_reason === "refusal") {
-    throw new Error("변환이 거부되었습니다.");
-  }
-  const text = response.content.find((b) => b.type === "text");
-  if (!text || text.type !== "text") throw new Error("응답에 텍스트가 없습니다.");
-  const parsed = JSON.parse(text.text) as Omit<GeneratedPost, "format">;
+  const parsed = await callModel(prompt.system, user, 4000, "low");
   return { ...parsed, format: null as unknown as string };
 }
