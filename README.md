@@ -1,35 +1,30 @@
-# magggy
+# magggy — 마케팅 육성 스튜디오
+
+네이버 블로그/카페 육성을 위한 원고를 대량 생산하는 웹 앱.
+스레드/인스타그램 버전은 만들어진 원고에서 버튼 한 번으로 파생합니다.
+
+## 실행 방법
+
+```bash
+npm install
+cp .env.example .env.local   # ANTHROPIC_API_KEY 입력
+npm run dev                  # http://localhost:3000
+```
+
+## 주요 기능
+
+- **작업 추가**: 채널(카페/블로그) → 주제 26종 또는 직접 입력 → 글 형태 7종 → 일일 생성량(5/10/20개)
+- **원고 생성**: Claude API로 오늘 분량 일괄 생성 (카페: 300~800자 랜덤, 블로그: 1,500~2,500자 장문)
+- **작업 현황**: 작업중/작업완료 분리, 총 원고 수·발행 수 추적
+- **원고 관리**: 복사 → 네이버에 붙여넣기 발행 → 발행 완료 체크
+- **파생**: 원고에서 스레드(훅 중심 500자) / 인스타 캡션(해시태그 포함) 버전 생성
+
+자세한 내용: [docs/product-spec.md](docs/product-spec.md), [docs/benchmark-yeonpost.md](docs/benchmark-yeonpost.md)
 
 ## VS Code에서 Claude Code 실행하기
 
 이 저장소는 VS Code에서 [Claude Code](https://code.claude.com/docs)를 바로 사용할 수 있도록 설정되어 있습니다.
+폴더를 열면 `.vscode/extensions.json`에 등록된 Claude Code 확장 설치를 자동으로 제안합니다.
 
-### 1. 확장 프로그램 설치
-
-이 폴더를 VS Code로 열면 `.vscode/extensions.json`에 등록된 **Claude Code** 확장(`anthropic.claude-code`) 설치를 자동으로 제안합니다. 알림이 뜨면 **설치(Install)**를 눌러주세요.
-
-수동 설치가 필요하다면:
-
-1. VS Code 왼쪽 사이드바에서 확장(Extensions) 아이콘 클릭
-2. `Claude Code` 검색 후 설치
-
-### 2. Claude Code CLI 설치 (터미널에서 실행할 경우)
-
-```bash
-npm install -g @anthropic-ai/claude-code
-```
-
-### 3. 로그인 및 실행
-
-- 확장 프로그램 사용 시: VS Code 사이드바의 Claude 아이콘을 클릭하거나 명령 팔레트(`Cmd/Ctrl+Shift+P`)에서 `Claude Code: Start` 실행
-- 터미널 사용 시: 통합 터미널(`` Ctrl+` ``)을 열고 아래 명령 실행
-
-```bash
-claude
-```
-
-최초 실행 시 Anthropic 계정으로 로그인하는 절차가 안내됩니다.
-
-### 참고
-
-- 공식 문서: https://code.claude.com/docs/en/claude-code-on-the-web
+터미널 사용 시: `npm install -g @anthropic-ai/claude-code` 후 `claude` 실행.
+공식 문서: https://code.claude.com/docs/en/claude-code-on-the-web
