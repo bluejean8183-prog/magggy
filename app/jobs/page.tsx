@@ -45,20 +45,20 @@ function JobTable({ jobs, emptyText }: { jobs: JobWithCounts[]; emptyText: strin
   );
 }
 
-export default function JobsPage() {
-  const jobs = db
+export default async function JobsPage() {
+  const jobs = (await db
     .prepare(
       `SELECT j.*,
         (SELECT COUNT(*) FROM posts p WHERE p.job_id = j.id AND p.channel IN ('cafe','blog')) AS total_posts,
         (SELECT COUNT(*) FROM posts p WHERE p.job_id = j.id AND p.status = 'published') AS published_posts
        FROM jobs j ORDER BY j.id DESC`
     )
-    .all() as JobWithCounts[];
+    .all()) as JobWithCounts[];
 
   const active = jobs.filter((j) => j.status === "active");
   const done = jobs.filter((j) => j.status === "done");
 
-  const stats = db
+  const stats = (await db
     .prepare(
       `SELECT
         (SELECT COUNT(*) FROM posts WHERE channel IN ('cafe','blog') AND status != 'discarded') AS total,
@@ -66,7 +66,7 @@ export default function JobsPage() {
         (SELECT COUNT(*) FROM posts WHERE channel IN ('threads','instagram')) AS derived,
         (SELECT COUNT(*) FROM posts WHERE status = 'published' AND published_at >= datetime('now', 'localtime', '-7 days')) AS week_published`
     )
-    .get() as { total: number; published: number; derived: number; week_published: number };
+    .get()) as { total: number; published: number; derived: number; week_published: number };
 
   return (
     <>

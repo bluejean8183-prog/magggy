@@ -6,7 +6,7 @@ export const maxDuration = 300;
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const pattern = db.prepare(`SELECT * FROM patterns WHERE id = ?`).get(id) as Pattern | undefined;
+  const pattern = (await db.prepare(`SELECT * FROM patterns WHERE id = ?`).get(id)) as Pattern | undefined;
   if (!pattern) return NextResponse.json({ error: "패턴을 찾을 수 없습니다." }, { status: 404 });
 
   const body = await req.json();
@@ -17,7 +17,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   try {
     const { summary, guide } = await analyzePattern(pattern.keyword, samples);
-    db.prepare(
+    await db.prepare(
       `UPDATE patterns SET summary = ?, guide = ?, created_at = datetime('now', 'localtime') WHERE id = ?`
     ).run(summary, guide, id);
     return NextResponse.json({ id: pattern.id, keyword: pattern.keyword, summary, guide });

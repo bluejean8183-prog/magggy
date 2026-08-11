@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "필수 항목이 비어있습니다." }, { status: 400 });
   }
 
-  const result = db
+  const result = await db
     .prepare(
       `INSERT INTO jobs (channel, target_name, target_url, topic, formats, daily_count, min_chars, max_chars, memo, pattern_id, image_mode)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`

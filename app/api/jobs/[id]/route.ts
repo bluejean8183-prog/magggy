@@ -5,7 +5,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const { id } = await params;
   const body = await req.json();
   if (body.status && ["active", "done"].includes(body.status)) {
-    db.prepare(`UPDATE jobs SET status = ? WHERE id = ?`).run(body.status, id);
+    await db.prepare(`UPDATE jobs SET status = ? WHERE id = ?`).run(body.status, id);
   }
   return NextResponse.json({ ok: true });
 }

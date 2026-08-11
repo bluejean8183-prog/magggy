@@ -7,19 +7,19 @@ export const dynamic = "force-dynamic";
 
 export default async function JobDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const job = db.prepare(`SELECT * FROM jobs WHERE id = ?`).get(id) as Job | undefined;
+  const job = (await db.prepare(`SELECT * FROM jobs WHERE id = ?`).get(id)) as Job | undefined;
   if (!job) notFound();
 
-  const posts = db
+  const posts = (await db
     .prepare(`SELECT * FROM posts WHERE job_id = ? ORDER BY id DESC`)
-    .all(id) as Post[];
+    .all(id)) as Post[];
 
   const formatLabels = (JSON.parse(job.formats) as string[])
     .map((k) => FORMATS.find((f) => f.key === k)?.label ?? k)
     .join(" · ");
 
   const pattern = job.pattern_id
-    ? (db.prepare(`SELECT * FROM patterns WHERE id = ?`).get(job.pattern_id) as Pattern | undefined)
+    ? ((await db.prepare(`SELECT * FROM patterns WHERE id = ?`).get(job.pattern_id)) as Pattern | undefined)
     : undefined;
 
   return (

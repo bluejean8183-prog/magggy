@@ -33,15 +33,15 @@ export const DEFAULT_CAFE_GUIDE = `## 카페 글 원칙
 - 후기 글은 사소한 단점 한 가지를 섞어 신뢰도 확보
 - 광고 티 나는 표현("강추", "인생템", 과도한 감탄) 자제`;
 
-export function getGuide(channel: string): string {
+export async function getGuide(channel: string): Promise<string> {
   const key = channel === "blog" ? "guide_blog" : "guide_cafe";
-  const row = db.prepare(`SELECT value FROM settings WHERE key = ?`).get(key) as { value: string } | undefined;
+  const row = (await db.prepare(`SELECT value FROM settings WHERE key = ?`).get(key)) as { value: string } | undefined;
   return row?.value ?? (channel === "blog" ? DEFAULT_BLOG_GUIDE : DEFAULT_CAFE_GUIDE);
 }
 
-export function setGuide(channel: string, value: string) {
+export async function setGuide(channel: string, value: string) {
   const key = channel === "blog" ? "guide_blog" : "guide_cafe";
-  db.prepare(
+  await db.prepare(
     `INSERT INTO settings (key, value, updated_at) VALUES (?, ?, datetime('now', 'localtime'))
      ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`
   ).run(key, value);

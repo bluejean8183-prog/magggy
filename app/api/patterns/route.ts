@@ -5,7 +5,7 @@ import { analyzePattern } from "@/lib/claude";
 export const maxDuration = 300;
 
 export async function GET() {
-  const patterns = db.prepare(`SELECT * FROM patterns ORDER BY id DESC`).all() as Pattern[];
+  const patterns = (await db.prepare(`SELECT * FROM patterns ORDER BY id DESC`).all()) as Pattern[];
   return NextResponse.json(patterns);
 }
 
@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const { summary, guide } = await analyzePattern(keyword, samples);
-    const result = db
+    const result = await db
       .prepare(`INSERT INTO patterns (keyword, summary, guide) VALUES (?, ?, ?)`)
       .run(keyword, summary, guide);
     return NextResponse.json({ id: result.lastInsertRowid, keyword, summary, guide });

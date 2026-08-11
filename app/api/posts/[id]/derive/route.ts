@@ -6,7 +6,7 @@ export const maxDuration = 120;
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const post = db.prepare(`SELECT * FROM posts WHERE id = ?`).get(id) as Post | undefined;
+  const post = (await db.prepare(`SELECT * FROM posts WHERE id = ?`).get(id)) as Post | undefined;
   if (!post) return NextResponse.json({ error: "원고를 찾을 수 없습니다." }, { status: 404 });
 
   const body = await req.json().catch(() => ({}));
@@ -17,7 +17,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   try {
     const derived = await derivePost(post, channel);
-    const result = db
+    const result = await db
       .prepare(
         `INSERT INTO posts (job_id, parent_id, channel, format, title, body, tags, image_suggestion, image_prompt)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
