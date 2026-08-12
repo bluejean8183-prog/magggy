@@ -77,7 +77,7 @@ async function callViaAgentSdk(opts: StructuredCallOpts): Promise<unknown> {
 }
 
 async function callViaGemini(opts: StructuredCallOpts): Promise<unknown> {
-  const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+  const model = process.env.GEMINI_MODEL || "gemini-flash-latest";
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
     {
