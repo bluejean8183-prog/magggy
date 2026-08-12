@@ -77,7 +77,10 @@ async function callViaAgentSdk(opts: StructuredCallOpts): Promise<unknown> {
 }
 
 async function callViaGemini(opts: StructuredCallOpts): Promise<unknown> {
-  const model = process.env.GEMINI_MODEL || "gemini-flash-latest";
+  // flash-lite: flash 대비 ~6배 빠름(2초 vs 13초). Vercel 무료플랜 60초 함수 제한에서
+  // 배치 생성이 콜드스타트 포함해도 안전하게 들어옴. 품질을 더 원하면
+  // 환경변수 GEMINI_MODEL=gemini-flash-latest 로 오버라이드(배치는 작게).
+  const model = process.env.GEMINI_MODEL || "gemini-flash-lite-latest";
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
     {
