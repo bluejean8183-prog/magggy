@@ -33,3 +33,11 @@ claude
 ### 참고
 
 - 공식 문서: https://code.claude.com/docs/en/claude-code-on-the-web
+
+## 11번가 셀러오피스 일괄 판매중지
+
+판매상품을 500개씩 전체 선택해서 판매중지로 바꾸는 작업을 자동 반복하는 브라우저 콘솔 스크립트입니다.
+
+- `scripts/11st-inspect.js` — 화면 구조 진단 (읽기 전용)
+- `scripts/11st-bulk-stop.js` — 일괄 판매중지 자동화
+- 사용법: [docs/11st-bulk-stop.md](docs/11st-bulk-stop.md)
