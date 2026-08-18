@@ -1,0 +1,15 @@
+{
+  "name": "11st-automation",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "11번가 셀러오피스 일괄 판매중지 자동화 (Playwright CDP)",
+  "scripts": {
+    "inspect": "node bulk-stop.mjs --inspect",
+    "dry": "node bulk-stop.mjs --dry-run",
+    "stop": "node bulk-stop.mjs"
+  },
+  "dependencies": {
+    "playwright-core": "^1.49.0"
+  }
+}

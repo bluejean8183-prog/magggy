@@ -40,4 +40,8 @@ claude
 
 - `scripts/11st-inspect.js` — 화면 구조 진단 (읽기 전용)
 - `scripts/11st-bulk-stop.js` — 일괄 판매중지 자동화
-- 사용법: [docs/11st-bulk-stop.md](docs/11st-bulk-stop.md)
+- `automation/` — PC에서 Claude Code가 크롬을 직접 조종하는 방식 (권장)
+
+사용법:
+- **PC에서 Claude가 직접 처리** → [docs/windows-setup.md](docs/windows-setup.md)
+- 브라우저 콘솔에 붙여넣기 (예비) → [docs/11st-bulk-stop.md](docs/11st-bulk-stop.md)
