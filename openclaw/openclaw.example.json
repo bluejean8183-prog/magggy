@@ -1,0 +1,55 @@
+// ~/.openclaw/openclaw.json 예시 (JSON5 형식이라 주석 가능)
+// 복사 후 <...> 부분만 채우세요. 모르는 키가 있으면 Gateway가 기동을 거부하므로
+// 수정 후 반드시 `openclaw doctor` 로 확인하세요.
+{
+  agents: {
+    defaults: {
+      // 기본 모델. 필요 시 변경 (예: anthropic/claude-sonnet-5)
+      model: "anthropic/claude-fable-5-1",
+      workspace: "~/.openclaw/workspace",
+    },
+    entries: {
+      main: {
+        tools: {
+          exec: {
+            // 여러 노드가 붙어 있을 때 기본 실행 대상. 비우면 유일한 노드 자동 선택
+            // node: "win-pc",
+          },
+        },
+      },
+    },
+  },
+
+  channels: {
+    telegram: {
+      enabled: true,
+      // BotFather에서 받은 토큰. 환경변수 TELEGRAM_BOT_TOKEN 으로 대체 가능
+      botToken: "<BOT_TOKEN>",
+      // pairing: 처음 말 거는 사람은 `openclaw pairing approve telegram <코드>` 로 승인해야 대화 가능
+      dmPolicy: "pairing",
+      groups: {
+        "*": { requireMention: true },
+      },
+    },
+  },
+
+  gateway: {
+    port: 18789,
+    // loopback(맥미니 안에서만) | lan(같은 네트워크) | tailnet(Tailscale)
+    // 윈도우 PC를 노드로 붙이려면 tailnet 또는 lan 으로 열고 반드시 토큰을 설정
+    bind: "tailnet",
+    auth: {
+      token: "<openssl rand -hex 32 로 만든 긴 문자열>",
+    },
+  },
+
+  tools: {
+    exec: {
+      host: "auto",
+      // deny | allowlist | ask | auto | full  — 처음엔 ask 권장
+      mode: "ask",
+      timeoutSeconds: 600,
+      notifyOnExit: true,
+    },
+  },
+}

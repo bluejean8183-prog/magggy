@@ -1,5 +1,13 @@
 # magggy
 
+## 맥미니 OpenClaw 에이전트 (텔레그램 + 윈도우 PC 관리)
+
+- 전체 설치·설정 가이드: [docs/openclaw/README.md](docs/openclaw/README.md)
+- OpenClaw vs Hermes 비교: [docs/openclaw/openclaw-vs-hermes.md](docs/openclaw/openclaw-vs-hermes.md)
+- 맥미니 설치 스크립트: `bash scripts/mac-setup.sh`
+- 윈도우 노드 등록 스크립트: `scripts/windows-node-setup.ps1`
+- 예시 설정 / 에이전트 성격 템플릿: `openclaw/`
+
 ## VS Code에서 Claude Code 실행하기
 
 이 저장소는 VS Code에서 [Claude Code](https://code.claude.com/docs)를 바로 사용할 수 있도록 설정되어 있습니다.
