@@ -2,6 +2,8 @@
 
 ## 맥미니 OpenClaw 에이전트 (텔레그램 + 윈도우 PC 관리)
 
+> 설치는 **맥미니에서 직접** 합니다. 맥미니에서 이 저장소를 클론한 뒤 아래 가이드나 스크립트를 실행하세요.
+
 - 전체 설치·설정 가이드: [docs/openclaw/README.md](docs/openclaw/README.md)
 - OpenClaw vs Hermes 비교: [docs/openclaw/openclaw-vs-hermes.md](docs/openclaw/openclaw-vs-hermes.md)
 - 맥미니 설치 스크립트: `bash scripts/mac-setup.sh`

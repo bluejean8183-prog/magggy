@@ -3,6 +3,17 @@
 이 문서는 **맥미니에 OpenClaw를 설치해 개인 AI 에이전트를 만들고, 텔레그램으로 대화하며, 윈도우 PC까지 원격으로 관리**하는 전체 과정을 순서대로 설명합니다.
 
 > 기준: OpenClaw 공식 문서(https://docs.openclaw.ai, 2026-09 시점). 버전에 따라 세부 명령이 달라질 수 있으니 막히면 `openclaw doctor`와 공식 문서를 먼저 확인하세요.
+>
+> 이 가이드의 명령어와 `openclaw/openclaw.example.json`은 **OpenClaw 2026.9.4 CLI로 실제 검증**했습니다 (`openclaw config validate` 통과).
+
+## 어디서 실행하나요?
+
+**전부 맥미니에서 직접 실행합니다.** 이 저장소는 설명서와 스크립트를 담은 것이지, 다른 컴퓨터에서 맥미니를 원격 설치해 주지는 못합니다.
+
+가장 편한 방법:
+1. 맥미니에서 VS Code를 열고 이 저장소를 클론합니다 (`git clone https://github.com/bluejean8183-prog/magggy`).
+2. VS Code에 Claude Code 확장이 자동 추천됩니다. 설치 후 Claude에게 "`docs/openclaw/README.md`대로 설치 진행해줘"라고 하면 맥미니 안에서 터미널을 직접 다루며 진행합니다.
+3. 또는 터미널만 열고 `bash scripts/mac-setup.sh`를 실행합니다.
 
 ---
 
@@ -59,7 +70,7 @@ openclaw onboard --install-daemon
 ```
 
 온보딩에서 묻는 것:
-1. **기본 모델 제공자** → Anthropic(Claude) 선택. API 키를 넣거나 `openclaw models auth`로 Claude 로그인
+1. **기본 모델 제공자** → Anthropic(Claude) 선택. API 키를 넣거나 `openclaw models auth login`으로 Claude 로그인
 2. **브라우저 통합** → 원하면 켜기
 3. **데몬 설치** → 예 (맥이 재부팅돼도 자동 실행)
 
@@ -90,7 +101,8 @@ export ANTHROPIC_API_KEY="sk-ant-..."
 **B. Claude 구독 OAuth 로그인**
 
 ```bash
-openclaw models auth
+openclaw models auth login
+openclaw models auth list     # 저장된 인증 프로필 확인
 ```
 
 기본 모델은 `~/.openclaw/openclaw.json`의 `agents.defaults.model`에서 바꿉니다. (예시 파일: `openclaw/openclaw.example.json`)
@@ -235,6 +247,7 @@ openclaw devices approve <deviceRequestId>
 openclaw nodes pending
 openclaw nodes approve <nodeRequestId>
 openclaw nodes list          # 윈도우 노드가 보이면 성공
+openclaw nodes status        # 연결 상태 + 지원 기능
 ```
 
 ### 방법 B. 윈도우 CLI 노드 (헤드리스)
