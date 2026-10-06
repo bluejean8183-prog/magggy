@@ -1,0 +1,13 @@
+.env
+__pycache__/
+*.pyc
+.pytest_cache/
+work/*
+!work/.gitkeep
+inbox/*
+!inbox/.gitkeep
+assets/bgm/*
+!assets/bgm/README.md
+assets/fonts/*.ttf
+assets/fonts/*.otf
+links.csv
