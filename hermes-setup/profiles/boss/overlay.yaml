@@ -1,0 +1,48 @@
+# 사장봇(boss) 설정 — apply-config.py 가 기존 config.yaml 에 합쳐 넣어요.
+# __OWNER_ID__ 는 스크립트가 사장님 텔레그램 숫자 ID로 바꿔요.
+# __BOSS_MODEL__ 은 사장님이 고른 모델로 바꿔요.
+
+model:
+  default: "__BOSS_MODEL__"
+  provider: "openrouter"
+
+provider_routing:
+  data_collection: "deny"      # 데이터를 학습에 쓰는 제공자는 쓰지 않음
+  sort: "price"                # 같은 모델이면 싼 제공자 먼저
+
+timezone: Asia/Seoul
+
+# 모르는 사람이 말을 걸면 대답하지 않고 무시 (페어링 코드도 안 보냄)
+unauthorized_dm_behavior: ignore
+
+approvals:
+  mode: manual
+  cron_mode: deny
+  unattended_mode: deny
+  approvers: ["__OWNER_ID__"]
+
+security:
+  redact_secrets: true
+
+# 사장봇이 쓸 수 있는 도구: 칸반, 되묻기, 할 일 목록, 기억, 지난 대화 검색
+# (컴퓨터 조작·파일·웹·결제 같은 도구는 처음엔 꺼 둡니다. 필요해지면 그때 상의해서 켜요.)
+platform_toolsets:
+  telegram: [kanban, clarify, todo, memory, session_search]
+  cli: [kanban, clarify, todo, memory, session_search]
+  cron: [kanban]
+
+agent:
+  disabled_toolsets:
+    [terminal, file, code_execution, browser, computer_use, delegation,
+     web, search, x_search, image_gen, video_gen, connections, discord, discord_admin]
+
+kanban:
+  dispatch_profiles: []
+  auto_decompose: false
+
+gateway:
+  platforms:
+    telegram:
+      extra:
+        allow_admin_from: ["__OWNER_ID__"]   # 슬래시 명령(/kanban 등)은 사장님만
+        user_allowed_commands: []

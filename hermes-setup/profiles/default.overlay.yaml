@@ -1,0 +1,20 @@
+# 기본(default) 프로필 = "관리용 본체"
+# 텔레그램 봇이 없어요. 사장봇·직원봇을 모두 실어 나르는 게이트웨이 1개만 돌립니다.
+# (헤르메스는 게이트웨이 1개가 모든 프로필을 같이 처리해요 → 메모리 절약)
+
+timezone: Asia/Seoul
+
+kanban:
+  # 칸반 카드를 보고 봇을 '작업자'로 따로 실행하지 않게 막아요.
+  # → 보드는 보고를 쌓아 두는 우편함 역할만 해요.
+  # → 직원봇이 터미널을 가진 작업자로 실행될 일이 없어요. 메모리도 아껴요.
+  dispatch_profiles: []
+  auto_decompose: false        # 카드를 AI가 멋대로 쪼개서 새 일을 만들지 않게
+
+approvals:
+  mode: manual                 # 위험한 명령은 항상 사람에게 물어보기
+  cron_mode: deny
+  unattended_mode: deny
+
+security:
+  redact_secrets: true         # 대화·로그에 비밀 값이 나오면 가림

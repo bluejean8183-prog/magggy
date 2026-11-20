@@ -33,3 +33,7 @@ claude
 ### 참고
 
 - 공식 문서: https://code.claude.com/docs/en/claude-code-on-the-web
+
+## 헤르메스 에이전트 설치 꾸러미
+
+맥미니에 헤르메스 에이전트(사장봇 + 직원봇)를 설치하는 안내서와 스크립트는 [`hermes-setup/`](hermes-setup/README.md) 폴더에 있어요.

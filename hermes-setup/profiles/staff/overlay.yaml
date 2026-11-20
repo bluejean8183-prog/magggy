@@ -1,0 +1,50 @@
+# 직원봇(staff) 설정 — apply-config.py 가 기존 config.yaml 에 합쳐 넣어요.
+# 직원봇은 "대화 + 칸반 기록"만 할 수 있어요. 컴퓨터 권한 없음.
+
+model:
+  default: "__STAFF_MODEL__"
+  provider: "openrouter"
+
+provider_routing:
+  data_collection: "deny"
+  sort: "price"
+
+timezone: Asia/Seoul
+
+unauthorized_dm_behavior: ignore
+
+approvals:
+  mode: manual
+  cron_mode: deny
+  unattended_mode: deny
+  approvers: ["__OWNER_ID__"]
+
+security:
+  redact_secrets: true
+  redact_phone_numbers: true
+
+# 칸반 도구만 켬. 나머지는 전부 끔.
+platform_toolsets:
+  telegram: [kanban]
+  cli: [kanban]
+
+agent:
+  disabled_toolsets:
+    [terminal, file, code_execution, browser, computer_use, delegation,
+     web, search, x_search, memory, session_search, skills, cronjob, todo,
+     image_gen, video_gen, tts, vision, video, connections, discord, discord_admin]
+  # memory 를 끈 이유: 직원봇 기억은 모든 직원 대화가 같이 써서,
+  # A 직원 이야기가 B 직원에게 새어 나갈 수 있어요.
+
+kanban:
+  dispatch_profiles: []
+  auto_decompose: false
+  auto_subscribe_on_create: true   # 카드가 완료되면 그 카드를 올린 직원 대화로 알림
+
+gateway:
+  platforms:
+    telegram:
+      extra:
+        # 직원은 /kanban, /tools 같은 관리 명령을 못 씀 (/help, /whoami 만 가능)
+        allow_admin_from: ["__OWNER_ID__"]
+        user_allowed_commands: []
