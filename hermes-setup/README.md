@@ -44,11 +44,11 @@
 2. 터미널을 열고(`Cmd + Space` → "터미널"), 아래 명령으로 폴더를 `~/magggy`로 옮기세요.
 
 ```bash
-mv ~/Downloads/magggy-claude-gracious-tesla-vw4auo ~/magggy
+mv ~/Downloads/magggy-claude-gracious-tesla-vw4auo ~/hermes-kit
 ```
 
 ```bash
-cd ~/magggy/hermes-setup && ls
+cd ~/hermes-kit/hermes-setup && ls
 ```
 
 `README.md`, `scripts`, `profiles`, `docs`가 보이면 성공이에요. 안 보이면 `ls ~/Downloads` 결과를 보여 주세요.
@@ -97,7 +97,7 @@ hermes doctor
 **메모리 확인:**
 
 ```bash
-zsh ~/magggy/hermes-setup/scripts/check-memory.sh
+zsh ~/hermes-kit/hermes-setup/scripts/check-memory.sh
 ```
 
 ---
@@ -113,7 +113,7 @@ zsh ~/magggy/hermes-setup/scripts/check-memory.sh
 실시간 가격을 확인하세요 (API 키 없이 공개 가격표만 읽어요).
 
 ```bash
-python3 ~/magggy/hermes-setup/scripts/list-models.py
+python3 ~/hermes-kit/hermes-setup/scripts/list-models.py
 ```
 
 결과를 저에게 보여 주시면 후보를 정리해 드릴게요. 추천 조합은 이래요.
@@ -133,7 +133,7 @@ hermes profile create staff --description "직원 보고 접수 창구. 대화�
 ### 2-4. 키 넣기 (화면에 안 보여요)
 
 ```bash
-cd ~/magggy/hermes-setup/scripts
+cd ~/hermes-kit/hermes-setup/scripts
 ```
 
 ```bash
@@ -231,7 +231,7 @@ hermes gateway
 2. 새 터미널 창을 열고(`Cmd + N`) 아래 명령을 실행하세요.
 
 ```bash
-cd ~/magggy/hermes-setup/scripts
+cd ~/hermes-kit/hermes-setup/scripts
 ```
 
 ```bash
@@ -301,7 +301,7 @@ hermes -p boss cron list
 ### 6-1. 잠자기 방지
 
 ```bash
-sudo zsh ~/magggy/hermes-setup/scripts/keep-awake.sh
+sudo zsh ~/hermes-kit/hermes-setup/scripts/keep-awake.sh
 ```
 
 ✔ 확인할 것: 결과에 `sleep 0`이 보이면 성공이에요. 화면은 10분 뒤 꺼지지만, 봇은 계속 돌아요.
@@ -339,7 +339,7 @@ hermes gateway status
 ```
 
 ```bash
-zsh ~/magggy/hermes-setup/scripts/check-memory.sh
+zsh ~/hermes-kit/hermes-setup/scripts/check-memory.sh
 ```
 
 ---

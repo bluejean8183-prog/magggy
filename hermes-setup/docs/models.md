@@ -4,7 +4,7 @@
 > 고르기 전에 맥미니에서 아래 명령으로 **실시간 가격**을 꼭 확인해 주세요 (API 키 없이 공개 가격표만 읽어요):
 >
 > ```bash
-> python3 ~/magggy/hermes-setup/scripts/list-models.py
+> python3 ~/hermes-kit/hermes-setup/scripts/list-models.py
 > ```
 
 조건: 유료 모델만(:free 제외), Claude 제외, 로컬 모델 제외, 도구 호출(tools) 지원.
