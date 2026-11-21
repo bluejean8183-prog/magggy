@@ -41,7 +41,7 @@
 
 1. 맥미니의 Safari에서 GitHub에 로그인한 뒤, 아래 주소를 열면 ZIP 파일이 내려받아져요.
    `https://github.com/bluejean8183-prog/magggy/archive/refs/heads/claude/gracious-tesla-vw4auo.zip`
-2. 터미널을 열고(`Cmd + Space` → "터미널"), 아래 명령으로 폴더를 `~/magggy`로 옮기세요.
+2. 터미널을 열고(`Cmd + Space` → "터미널"), 아래 명령으로 폴더를 `~/hermes-kit`으로 옮기세요 (이미 `~/magggy` 폴더가 있을 수 있어서 다른 이름을 써요).
 
 ```bash
 mv ~/Downloads/magggy-claude-gracious-tesla-vw4auo ~/hermes-kit
